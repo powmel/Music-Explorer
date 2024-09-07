@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location-based Music App</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCASlakm6SlzFDgR7JU_ETbbP9xIFSxUzY"></script>
+</head>
+<body>
+    <h1>Location-based Music App</h1>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <script>
+        let map;
+        let userMarker;
+        let spot = { lat: 35.681236, lng: 139.767125 }; // 東京駅の座標
+        let spotRadius = 50; // メートル単位の範囲
+        let audio = new Audio('your_music_file.mp3'); // 音楽ファイルのURLを指定
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: spot,
+                zoom: 15,
+            });
+
+            // スポットのマーカーを表示
+            new google.maps.Marker({
+                position: spot,
+                map: map,
+                title: "Tokyo Station"
+            });
+
+            // ユーザーの現在位置を取得
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    (position) => {
+                        let userPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        // ユーザーのマーカーを更新
+                        if (!userMarker) {
+                            userMarker = new google.maps.Marker({
+                                position: userPos,
+                                map: map,
+                                title: "Your Location",
+                                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                            });
+                        } else {
+                            userMarker.setPosition(userPos);
+                        }
+
+                        // 距離を計算
+                        let distance = calculateDistance(userPos, spot);
+                        console.log("Distance to spot: " + distance + " meters");
+
+                        // 距離が範囲内に入ったら音楽を再生
+                        if (distance < spotRadius) {
+                            if (audio.paused) {
+                                audio.play();
+                            }
+                        } else {
+                            if (!audio.paused) {
+                                audio.pause();
+                            }
+                        }
+                    },
+                    () => {
+                        alert('位置情報を取得できませんでした。');
+                    }
+                );
+            } else {
+                alert('このブラウザは位置情報をサポートしていません。');
+            }
+        }
+
+        // 2点間の距離を計算する関数
+        function calculateDistance(pos1, pos2) {
+            let R = 6371e3; // 地球の半径（メートル）
+            let lat1 = pos1.lat * Math.PI / 180;
+            let lat2 = pos2.lat * Math.PI / 180;
+            let deltaLat = (pos2.lat - pos1.lat) * Math.PI / 180;
+            let deltaLng = (pos2.lng - pos1.lng) * Math.PI / 180;
+
+            let a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                    Math.cos(lat1) * Math.cos(lat2) *
+                    Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            let distance = R * c; // メートル単位の距離
+            return distance;
+        }
+
+        // ページが読み込まれたときに地図を初期化
+        window.onload = initMap;
+    </script>
+</body>
+</html>
