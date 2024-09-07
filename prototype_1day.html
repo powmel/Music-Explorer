@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Google Map</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let userMarker;
+        let audio = new Audio('your_music_file.mp3'); // 音楽ファイルのURL
+        let spot = { lat: 35.681236, lng: 139.767125 }; // スポットの位置
+        let spotRadius = 100; // 100メートルの範囲
+        let userPos = { lat: 35.682236, lng: 139.765125 }; // ユーザーの初期位置
+
+        function initMap() {
+            // マップスタイルを最小限にするための設定
+            const minimalMapStyle = [
+                {
+                    featureType: "all",
+                    elementType: "labels",
+                    stylers: [{ visibility: "off" }] // ラベルを非表示
+                },
+                {
+                    featureType: "road",
+                    elementType: "geometry",
+                    stylers: [{ visibility: "simplified" }]
+                }
+            ];
+
+            // 地図を初期化
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: userPos,
+                zoom: 18, // ズームレベル
+                styles: minimalMapStyle, // スタイルを適用
+                disableDefaultUI: true, // UIを非表示
+            });
+
+            // スポットに円（わっか）を描画
+            let spotCircle = new google.maps.Circle({
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                center: spot,
+                radius: spotRadius // 半径
+            });
+
+            // スポットにマーカーを追加
+            new google.maps.Marker({
+                position: spot,
+                map: map,
+                title: "Spot"
+            });
+
+            // ユーザーの位置をマップ上に表示
+            userMarker = new google.maps.Marker({
+                position: userPos,
+                map: map,
+                title: "Your Location",
+                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            });
+
+            // 矢印キーでユーザーの位置を動かすイベントを登録
+            document.addEventListener('keydown', handleArrowKeys);
+
+            // サークル内に入ったかチェックするための関数を定期実行
+            setInterval(() => checkProximity(userPos, spot, spotRadius), 1000);
+        }
+
+        // ユーザーの位置とスポットとの距離を計算
+        function calculateDistance(pos1, pos2) {
+            let R = 6371e3; // 地球の半径（メートル）
+            let lat1 = pos1.lat * Math.PI / 180;
+            let lat2 = pos2.lat * Math.PI / 180;
+            let deltaLat = (pos2.lat - pos1.lat) * Math.PI / 180;
+            let deltaLng = (pos2.lng - pos1.lng) * Math.PI / 180;
+
+            let a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                    Math.cos(lat1) * Math.cos(lat2) *
+                    Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            let distance = R * c; // メートル単位の距離
+            return distance;
+        }
+
+        // ユーザーがサークル内に入っているかチェック
+        function checkProximity(userPos, spot, spotRadius) {
+            let distance = calculateDistance(userPos, spot);
+            console.log("Distance to spot: " + distance + " meters");
+
+            if (distance < spotRadius) {
+                if (audio.paused) {
+                    audio.play(); // サークル内に入ったら音楽再生
+                    console.log("Music started!");
+                }
+            } else {
+                if (!audio.paused) {
+                    audio.pause(); // サークル外に出たら音楽停止
+                    console.log("Music paused.");
+                }
+            }
+        }
+
+        // 矢印キーでユーザーの位置を動かす
+        function handleArrowKeys(event) {
+            const stepSize = 0.0001; // 移動量
+
+            switch (event.key) {
+                case "ArrowUp":
+                    userPos.lat += stepSize;
+                    break;
+                case "ArrowDown":
+                    userPos.lat -= stepSize;
+                    break;
+                case "ArrowLeft":
+                    userPos.lng -= stepSize;
+                    break;
+                case "ArrowRight":
+                    userPos.lng += stepSize;
+                    break;
+                default:
+                    return; // 矢印キー以外は無視
+            }
+
+            // マーカーを更新
+            userMarker.setPosition(userPos);
+            // マップの中心をユーザーの新しい位置に設定
+            map.setCenter(userPos);
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
