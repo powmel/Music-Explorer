@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Circle Music</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCASlakm6SlzFDgR7JU_ETbbP9xIFSxUzY"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let userMarker;
+        let currentAudio = null;  // 現在再生されている音楽
+        let isPlaying = false;    // 音楽が再生中かどうか
+
+        // スポットの状態による画像
+        const spotInsideIcon = 'spot_inside.png';  // 中にいる時の画像
+        const spotOutsideIcon = 'spot_outside.png';  // 外にいる時の画像
+
+        // サークルごとの曲
+        const audios = [
+            new Audio('test1.wav'),  // 入口の音楽
+            new Audio('test2.wav'),    // ギターの音楽
+            new Audio('test3.wav')    // 展示の音楽
+        ];
+
+        // 各スポットのサークル（重ならないように中心と半径を調整）
+        let circles = [
+            { position: { lat: 35.65995, lng: 139.70518 }, radius: 5 },  // 入口のサークル
+            { position: { lat: 35.65986, lng: 139.70529 }, radius: 5 },  // ギターのサークル
+            { position: { lat: 35.65977, lng: 139.70548 }, radius: 5 }   // 展示のサークル
+        ];
+
+        let markers = []; // マーカーを格納する配列
+        let userPos = { lat: 35.6599471, lng: 139.7052013 }; // 初期のユーザーの位置
+
+        function initMap() {
+            // 地図をユーザーの現在位置を中心にして初期化
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: userPos, // ユーザーの位置を中心に
+                zoom: 19,
+                disableDefaultUI: true // UIを非表示
+            });
+
+            // 各サークルをマップ上に描画
+            circles.forEach((circle, index) => {
+                new google.maps.Circle({
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#FF0000',
+                    fillOpacity: 0.35,
+                    map: map,
+                    center: circle.position,
+                    radius: circle.radius // 半径
+                });
+
+                // スポットマーカーを最初は外にいる状態で表示
+                let marker = new google.maps.Marker({
+                    position: circle.position,
+                    map: map,
+                    title: `Spot ${index + 1}`,
+                    icon: spotOutsideIcon
+                });
+
+                // マーカーを配列に追加
+                markers.push(marker);
+            });
+
+            // ユーザーのマーカーを表示
+            userMarker = new google.maps.Marker({
+                position: userPos,
+                map: map,
+                title: "Your Location",
+                icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+            });
+
+            // 矢印キーでユーザーの位置を変更
+            document.addEventListener('keydown', handleArrowKeys);
+
+            // 初回の距離チェック
+            checkProximity(userPos);
+        }
+
+        // 矢印キーでユーザーの位置を変更する
+        function handleArrowKeys(event) {
+            const stepSize = 0.0001; // 移動量（小さめに設定）
+
+            switch (event.key) {
+                case "ArrowUp":
+                    userPos.lat += stepSize;
+                    break;
+                case "ArrowDown":
+                    userPos.lat -= stepSize;
+                    break;
+                case "ArrowLeft":
+                    userPos.lng -= stepSize;
+                    break;
+                case "ArrowRight":
+                    userPos.lng += stepSize;
+                    break;
+                default:
+                    return; // 矢印キー以外は無視
+            }
+
+            // ユーザーマーカーを新しい位置に更新
+            userMarker.setPosition(userPos);
+            // マップの中心をユーザーの新しい位置に設定
+            map.setCenter(userPos);
+
+            // 位置が変更されたら距離をチェック
+            checkProximity(userPos);
+        }
+
+        // ユーザーの位置と各サークルとの距離をチェック
+        function checkProximity(userPos) {
+            circles.forEach((circle, index) => {
+                let distance = calculateDistance(userPos, circle.position);
+                console.log(`Distance to circle ${index + 1}: ${distance} meters`);
+
+                // マーカーの画像を切り替える
+                if (distance < circle.radius) {
+                    markers[index].setIcon(spotInsideIcon); // サークル内の場合
+                } else {
+                    markers[index].setIcon(spotOutsideIcon); // サークル外の場合
+                }
+
+                // サークル内に入り、音楽が再生中でない場合に音楽を再生
+                if (distance < circle.radius && !isPlaying) {
+                    if (currentAudio !== audios[index]) {
+                        currentAudio = audios[index];
+                    }
+
+                    if (currentAudio.paused) {
+                        currentAudio.play();
+                        isPlaying = true;
+                        console.log(`Music from circle ${index + 1} started!`);
+                    }
+                }
+            });
+        }
+
+        // 2点間の距離を計算する関数
+        function calculateDistance(pos1, pos2) {
+            let R = 6371e3; // 地球の半径（メートル）
+            let lat1 = pos1.lat * Math.PI / 180;
+            let lat2 = pos2.lat * Math.PI / 180;
+            let deltaLat = (pos2.lat - pos1.lat) * Math.PI / 180;
+            let deltaLng = (pos2.lng - pos1.lng) * Math.PI / 180;
+
+            let a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                    Math.cos(lat1) * Math.cos(lat2) *
+                    Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            let distance = R * c; // メートル単位の距離
+            return distance;
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
