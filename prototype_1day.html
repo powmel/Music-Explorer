@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Google Map</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY"></script>
+    <title>Multiple Circle Music</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCASlakm6SlzFDgR7JU_ETbbP9xIFSxUzY"></script>
     <style>
         html, body {
             height: 100%;
@@ -22,51 +22,50 @@
     <script>
         let map;
         let userMarker;
-        let audio = new Audio('your_music_file.mp3'); // 音楽ファイルのURL
-        let spot = { lat: 35.681236, lng: 139.767125 }; // スポットの位置
-        let spotRadius = 100; // 100メートルの範囲
+        let currentAudio = null;  // 現在再生されている音楽
+        let isPlaying = false;    // 音楽が再生中かどうか
+
+        // サークルごとの曲
+        const audios = [
+            new Audio('test1.wav'),  // サークル1の音楽
+            new Audio('test2.wav'),  // サークル2の音楽
+            new Audio('test3.wav')   // サークル3の音楽
+        ];
+
+        let circles = [
+            { position: { lat: 35.681236, lng: 139.767125 }, radius: 100 },  // サークル1
+            { position: { lat: 35.682236, lng: 139.769125 }, radius: 100 },  // サークル2
+            { position: { lat: 35.683236, lng: 139.771125 }, radius: 100 }   // サークル3
+        ]; 
+
         let userPos = { lat: 35.682236, lng: 139.765125 }; // ユーザーの初期位置
 
         function initMap() {
-            // マップスタイルを最小限にするための設定
-            const minimalMapStyle = [
-                {
-                    featureType: "all",
-                    elementType: "labels",
-                    stylers: [{ visibility: "off" }] // ラベルを非表示
-                },
-                {
-                    featureType: "road",
-                    elementType: "geometry",
-                    stylers: [{ visibility: "simplified" }]
-                }
-            ];
-
             // 地図を初期化
             map = new google.maps.Map(document.getElementById('map'), {
                 center: userPos,
-                zoom: 18, // ズームレベル
-                styles: minimalMapStyle, // スタイルを適用
+                zoom: 17,
                 disableDefaultUI: true, // UIを非表示
             });
 
-            // スポットに円（わっか）を描画
-            let spotCircle = new google.maps.Circle({
-                strokeColor: '#FF0000',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillColor: '#FF0000',
-                fillOpacity: 0.35,
-                map: map,
-                center: spot,
-                radius: spotRadius // 半径
-            });
+            // 各サークルをマップ上に描画
+            circles.forEach((circle, index) => {
+                new google.maps.Circle({
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: '#FF0000',
+                    fillOpacity: 0.35,
+                    map: map,
+                    center: circle.position,
+                    radius: circle.radius // 半径
+                });
 
-            // スポットにマーカーを追加
-            new google.maps.Marker({
-                position: spot,
-                map: map,
-                title: "Spot"
+                new google.maps.Marker({
+                    position: circle.position,
+                    map: map,
+                    title: `Spot ${index + 1}`
+                });
             });
 
             // ユーザーの位置をマップ上に表示
@@ -80,8 +79,37 @@
             // 矢印キーでユーザーの位置を動かすイベントを登録
             document.addEventListener('keydown', handleArrowKeys);
 
-            // サークル内に入ったかチェックするための関数を定期実行
-            setInterval(() => checkProximity(userPos, spot, spotRadius), 1000);
+            // 1秒ごとにサークル内にいるかチェック
+            setInterval(checkProximity, 1000);
+
+            // 音楽が終了したときの処理
+            audios.forEach(audio => {
+                audio.addEventListener('ended', () => {
+                    isPlaying = false;
+                    checkProximity(); // 音楽終了後に再度チェック
+                });
+            });
+        }
+
+        // ユーザーの位置と各サークルとの距離をチェック
+        function checkProximity() {
+            circles.forEach((circle, index) => {
+                let distance = calculateDistance(userPos, circle.position);
+                console.log(`Distance to circle ${index + 1}: ${distance} meters`);
+
+                // サークル内に入り、音楽が再生中でない場合に音楽を再生
+                if (distance < circle.radius && !isPlaying) {
+                    if (currentAudio !== audios[index]) {
+                        currentAudio = audios[index];
+                    }
+
+                    if (currentAudio.paused) {
+                        currentAudio.play();
+                        isPlaying = true;
+                        console.log(`Music from circle ${index + 1} started!`);
+                    }
+                }
+            });
         }
 
         // ユーザーの位置とスポットとの距離を計算
@@ -99,24 +127,6 @@
 
             let distance = R * c; // メートル単位の距離
             return distance;
-        }
-
-        // ユーザーがサークル内に入っているかチェック
-        function checkProximity(userPos, spot, spotRadius) {
-            let distance = calculateDistance(userPos, spot);
-            console.log("Distance to spot: " + distance + " meters");
-
-            if (distance < spotRadius) {
-                if (audio.paused) {
-                    audio.play(); // サークル内に入ったら音楽再生
-                    console.log("Music started!");
-                }
-            } else {
-                if (!audio.paused) {
-                    audio.pause(); // サークル外に出たら音楽停止
-                    console.log("Music paused.");
-                }
-            }
         }
 
         // 矢印キーでユーザーの位置を動かす
