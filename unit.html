@@ -1,16 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <script src="unit.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="unit.css">
-    <title>Document</title>
+    <title>Unit Playlist</title>
+    <script src="unit.js" defer></script> <!-- JavaScriptファイルを読み込む -->
+    <link rel="stylesheet" href="unit.css"> <!-- CSSファイルを読み込む -->
 </head>
 <body>
-    <h1>
-        こんにちああああああああああああ
-        デザインはHTMLとCSSで行います
-    </h1>
+    <h1>赤いサークルのプレイリスト</h1>
+    <!-- 音楽ファイルのプレイリスト -->
+    <div id="playlist">
+        <h2>現在のプレイリスト</h2>
+        <ul id="playlist-list">
+            <!-- JavaScriptで音楽ファイルを表示 -->
+        </ul>
+    </div>
+    <!-- 新しい音楽ファイルを追加するフォーム -->
+    <div id="add-music">
+        <h2>新しい音楽を追加</h2>
+        <form id="add-music-form">
+            <label for="music-name">曲名:</label>
+            <input type="text" id="music-name" name="music-name" required>
+            <br>
+            <label for="music-file">音楽ファイル:</label>
+            <input type="file" id="music-file" name="music-file" accept="audio/*" required>
+            <br><br>
+            <button type="submit">プレイリストに追加</button>
+        </form>
+    </div>
+    <!-- プレイリストと新しい曲を追加するスクリプト -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 既存のプレイリストを localStorage から読み込み
+            let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+            const playlistList = document.getElementById('playlist-list');
+            // プレイリストにある音楽ファイルを表示
+            function displayPlaylist() {
+                playlistList.innerHTML = '';
+                playlist.forEach((music, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${index + 1}. ${music.name}`;
+                    playlistList.appendChild(li);
+                });
+            }
+            displayPlaylist();
+            // 新しい音楽をプレイリストに追加する処理
+            const addMusicForm = document.getElementById('add-music-form');
+            addMusicForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const musicName = document.getElementById('music-name').value;
+                const musicFile = document.getElementById('music-file').files[0];
+                // プレイリストに音楽ファイルを追加
+                const musicPath = URL.createObjectURL(musicFile); // ローカルでの一時URL
+                playlist.push({ name: musicName, path: musicPath });
+                // localStorage にプレイリストを保存
+                localStorage.setItem('playlist', JSON.stringify(playlist));
+                // プレイリストを更新して再表示
+                displayPlaylist();
+                // フォームをリセット
+                addMusicForm.reset();
+            });
+        });
+    </script>
 </body>
 </html>
