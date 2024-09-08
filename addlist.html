@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="addlist.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="addlist.css">
+    <title>addlist</title>
+</head>
+<body>
+    <h1>
+        ここはプレイリストを追加します。
+    </h1>
+    <div>
+    <form action="musiclist.html" form method="post" enctype="multipart/form-data">
+        追加したい曲を選択してください。<br>
+        <div>
+            <input type="file" name="addmusic" accept=".mp3,.m4a,.aac,.wav,.flac,.ogg">
+        </div>
+        <div>
+            <input type="submit" value="追加">
+        </div>
+        <div>
+            <button type="reset">クリア</button>
+        </div>
+　　</form>
+    </div>
+</body>
+</html>
