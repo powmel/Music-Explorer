@@ -58,14 +58,18 @@
                     fillOpacity: 0.35,
                     map: map,
                     center: circle.position,
-                    radius: circle.radius // 半径
-                });
+                    radius: circle.radius, // 半径    
+            });
 
-                new google.maps.Marker({
+                const positionMarkerOption ={
                     position: circle.position,
                     map: map,
-                    title: `Spot ${index + 1}`
-                });
+                    title: `Spot ${index + 1}`,
+                    icon: {
+                        url: 'normalpin.png'// お好みの画像までのパスを指定
+                    }
+                } 
+                positionMarker = new google.maps.Marker(positionMarkerOption);
             });
 
             // ユーザーの位置をマップ上に表示

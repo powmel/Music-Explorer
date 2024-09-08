@@ -11,5 +11,23 @@
     <h1>
         ここはプレイリストを表示します。
     </h1>
+    <ol id="list">
+    </ol>
+    <script>
+    //ここに元の音源ファイルの配列を読み取りたい
+    var mlist = new Array()
+    for (var i = 0; i < mlist.length; i++){
+        
+    }  
+    //読み取ったものを箇条書きで表示
+    for (var i = 0; i < mlist.length; i++) { 
+    　var musicList = document.createElement('li'); 
+    　musicList.textContent = mlist[i];
+    　document.getElementById('list').appendChild(musicList); 
+    }
+    </script>
+    <button onclick="addpage()">曲を追加</button>
+    <h3>追加された曲</h3>
+    <pre id="receivedText"></pre>
 </body>
 </html>

@@ -12,13 +12,14 @@
         ここはプレイリストを追加します。
     </h1>
     <div>
-    <form action="musiclist.html" form method="post" enctype="multipart/form-data">
+    <form action="musiclist.html" id="addmusic" method="post" enctype="multipart/form-data">
         追加したい曲を選択してください。<br>
         <div>
-            <input type="file" name="addmusic" accept=".mp3,.m4a,.aac,.wav,.flac,.ogg">
+            <input type="file" id= 'fileInput' name="Amusic" accept=".mp3,.m4a,.aac,.wav,.flac,.ogg">
         </div>
         <div>
-            <input type="submit" value="追加">
+            <button onclick="getFileName()">読み込み</button>
+            <button onclick="sendmusic()">追加</button>
         </div>
         <div>
             <button type="reset">クリア</button>
